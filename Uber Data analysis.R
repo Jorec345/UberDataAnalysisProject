@@ -10,8 +10,9 @@ library(viridis)
 library(ggpubr)
 library(psych)
 library(lubridate)
-
-
+library(ggrepel)
+library(forcats)
+library(scales)
 
 
 ##consuming in the 2018 Data
@@ -96,7 +97,6 @@ ggplot(data = MonthlyData, aes(x = Months, y = MonthlyTotals)) +
         strip.text = element_text(face="bold", size=rel(1.2)))
 
 
-##compare against 2017**
 
 ##Employee STATS Analysis
 ##Total Number of employee uber orders by Months
@@ -121,8 +121,8 @@ ggplot(EmployeeMonthlyFreq,aes(fill = Months,x = Months,y = Freq))+
 #there is no evidence of seasonality from 2017 to 2018
 
 
-##individual employee total orders
-EmployeeYearlyExpense <- 
+##individual employee total orders**
+EmployeeFrequencyofOrder<- 
   New.UberData%>%
     mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
            Months = factor(months(as.Date(`Date Requested`)),
@@ -132,6 +132,11 @@ EmployeeYearlyExpense <-
     group_by(FullNames,Year)%>%
     count()%>%
     arrange(desc(n))
+
+
+
+
+
 
 ##individual employee expenses
 EmployeeYearlyExpense <- 
@@ -162,6 +167,8 @@ ggplot(data = AnalysisByTime, aes(x = hours, y = No.OfOrders))+
 
 ##Most of the orders are done at 10 am and 9 pm
 
+
+##Analysis by day of week
 New.UberData%>%
   mutate(FullNames = paste(`First Name`,`Last Name`))%>%
   select(9,10,13,12,17,19,20,21,22)%>%
@@ -198,7 +205,7 @@ for (i in 1:nrow(EmployeeYearlyExpense)) {
 ###analysis of Total spending by department and expense code
 DepartExpense <- 
   cbind(EmployeeYearlyExpense,Department)%>%
-    rename(Departments = ...5)%>%
+    rename(Departments = ...4)%>%
     group_by(Departments,Year)%>%
     summarise(TotalSpending = sum(Individual_Charges))%>%
     arrange(desc(TotalSpending))
