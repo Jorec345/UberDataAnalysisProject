@@ -11,7 +11,12 @@ library(ggpubr)
 library(psych)
 library(lubridate)
 library(ggrepel)
+<<<<<<< HEAD
 
+=======
+library(forcats)
+library(scales)
+>>>>>>> cfd962ab06656346babe93eba834db198a52e680
 
 
 ##consuming in the 2018 Data
@@ -155,6 +160,11 @@ EmployeeFrequencyofOrder<-
 
 
 
+
+
+
+
+
 ##individual employee expenses
 EmployeeYearlyExpense <- 
   New.UberData%>%
@@ -190,6 +200,7 @@ ggplot(data = AnalysisByTime, aes(x = hours, y = No.OfOrders))+
 
 
 ##Analysis by day of week
+<<<<<<< HEAD
 AnalysisByDayOfWeek <- 
   New.UberData%>%
     mutate(FullNames = paste(`First Name`,`Last Name`))%>%
@@ -204,6 +215,15 @@ ggplot(AnalysisByDayOfWeek,aes(fill = dayofweek,x = dayofweek,y = No.OfOrders))+
   facet_grid(.~Year)+
   ggtitle("Analysis by day of week")
 
+=======
+New.UberData%>%
+  mutate(FullNames = paste(`First Name`,`Last Name`))%>%
+  select(9,10,13,12,17,19,20,21,22)%>%
+  filter(Year == "2018")%>%
+  group_by(dayofweek)%>%
+  summarise(No.OfOrders = n()) %>%
+  arrange(desc(No.OfOrders))
+>>>>>>> cfd962ab06656346babe93eba834db198a52e680
 
 ##Employee analysis by time of order and amount paid
 Order_Amount <- 
