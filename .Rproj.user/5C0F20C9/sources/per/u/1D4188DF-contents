@@ -1,0 +1,33 @@
+ggplot(data=DepartExpense, aes(x= Departments, y=TotalSpending, group= Year, colour=Year, fill=Year)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) + 
+  facet_grid(.~ Year) +theme_void()
+
+
+ggplot(data = EmployeeMonthlyFreq, aes(x = Months, y = Freq))+
+  geom_bar(stat = 'identity', aes(fill = Months))+
+  theme_grey()+
+  labs(title = 'Frequency of Uber orders',
+       y = 'Frequency', x = 'Months')
+
+
+ggplot(YearlyData, aes(x= summedTotals, y=Year, fill= Year)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  geom_text(aes(label = percent(sum(summedTotals)/summedTotals[i]), size=5))
+
+ggplot(NewYearly.Data, aes(x = "", y = summedTotals, 
+                           fill = fct_inorder(Year))) +
+  geom_col(width = 1, color = 1) +
+  geom_text(aes(label = NewYearly.Data$summedTotals),
+            position = position_stack(vjust = 0.5)) +
+  coord_polar(theta = "y") +
+  guides(fill = guide_legend(title = "Year")) +
+  scale_y_continuous(breaks = NewYearly.Data$Year, labels = NewYearly.Data$Prop) +
+  theme(axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        axis.text = element_text(size = 15), 
+        legend.position = "none", # Removes the legend
+        panel.background = element_rect(fill = "white"))
+#Y=B.+B1X1
+##Y = 162.0287+53.7061(Charges)

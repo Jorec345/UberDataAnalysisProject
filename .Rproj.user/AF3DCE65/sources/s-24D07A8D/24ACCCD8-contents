@@ -1,0 +1,105 @@
+##bar plots are used for ranking
+#works with numeric values
+library("dplyr")
+library("reshape2")
+library(ggplot2)
+library("data.table")
+library("plotly")
+myCrimedata <- read.csv("E:/Projects/R Projects/Data Cleaning/Crime_Data.csv",
+                        header = TRUE, stringsAsFactors = F)
+myCrimedata%>%
+  na.omit()%>%
+  select(Crime.Subcategory,Neighborhood)%>%
+  summarise(count = n())
+str(head(myCrimedata,5))
+
+
+## Basic barplot - Vadeaths Male
+VaDeaths = data.frame(VADeaths)
+str(VADeaths)
+Vadeaths_Male <-  VADeaths[,1]
+barplot(Vadeaths_Male, main = "Rural Male Deaths", ylab = "count",
+        xlab = "Age Bracket", horiz = F,
+        col = c("red","white","yellow","#96205b","blue")
+        ,border = "green")
+
+##stacked barplot - 
+barplot(VADeaths, col = c("red","violet","green","lavender","blue"), 
+        legend = rownames(VADeaths) )
+
+###grouped barchart- 
+barplot(VADeaths, col = c("red","violet","green","lavender","blue"), 
+         beside = TRUE )
+legend(legend = rownames(VADeaths),"topleft", 
+       fill = c("red","violet","green","lavender","blue"),
+       box.lty  = 0,
+       bg = "#00000000") 
+##Basic barplot - Vadeaths Female
+Vadeaths_Female <- VADeaths[,"Rural Female"]
+barplot(Vadeaths_Female, main = "Rural Female Deaths", ylab = "count",
+        xlab = "Age Bracket", horiz = F,
+        col = c("red","white","yellow","#96205b","blue")
+        ,border = "green")
+
+
+##summarize by getting totals for male and female grouped by age
+###grouping and summing the male data - ggplot barplots
+
+VADeaths = as.matrix(VaDeaths)
+VadeathsAverage <-  melt(VADeaths)
+
+##filter by age brackets and no of deaths
+Age_NoofDeaths <- 
+  VadeathsAverage %>%
+  rename( Brackets = Var1,Gender.Location = Var2 ,NofDeaths = value)%>%
+  filter(Brackets %in% c("60-64","65-69","70-74"), NofDeaths >= 20 )
+
+#filter by age brackets or no of deaths
+AgeOrNoofDeaths <- 
+  VadeathsAverage %>%
+  rename( Brackets = Var1,Gender.Location = Var2 ,NofDeaths = value)%>%
+  filter(Brackets %in% c("60-64","65-69","70-74") | NofDeaths >= 20 )
+
+
+
+vdeathsMale <- 
+  VaDeaths %>%
+  select(Rural.Male,Urban.Male)%>%
+  transmute(Malerowsums = rowSums(.))
+  
+  
+#grouping and summing the Female data 
+vdeathsFemale <- 
+  VaDeaths %>%
+  select(Rural.Female,Urban.Female)%>%
+  transmute(Femalerowsums = rowSums(.))
+
+###combining Vadeaths according to gender  
+TotalVadeaths <- cbind(vdeathsFemale,vdeathsMale)  
+Total.Vadeaths = as.matrix(TotalVadeaths)
+
+##visualizing with stacked plot
+barplot(Total.Vadeaths, col = c("khaki","violet","tomato","lavender","ivory"), 
+        legend = rownames(Total.Vadeaths),main = "Male-Female Deaths")
+##visualizing with a grouped plot_
+barplot(Total.Vadeaths, main = "Male-Female Deaths",
+        col = c("khaki","violet","tomato","lavender","ivory"), 
+        beside = TRUE,  )
+legend(legend = rownames(Total.Vadeaths),"topleft", 
+       fill = c("khaki","violet","tomato","lavender","ivory"),
+       box.lty  = 0,
+       bg = "#00000000")
+
+##GGplot- Bar plot
+longformart <- melt(Total.Vadeaths)
+ggplot(longformart,aes(fill = Var2,x = Var1,y = value))+
+        geom_histogram(position = "dodge",stat = "identity")+
+        ggtitle("Male-Female Deaths",subtitle = 'Comparing Male-Female Deaths by Age Group')
+  
+
+
+
+
+
+
+

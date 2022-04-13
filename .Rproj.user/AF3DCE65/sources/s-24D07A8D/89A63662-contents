@@ -1,0 +1,243 @@
+library(dplyr)
+library(readr)
+library(stats)
+library(chron)
+library(tidyverse)
+library(data.table)
+library(hrbrthemes)
+library(tidyr)
+library(viridis)
+library(ggpubr)
+library(psych)
+library(lubridate)
+
+
+
+
+##consuming in the 2018 Data
+UberData <- read.csv("UberData.csv",header = TRUE, stringsAsFactors = FALSE)
+
+colnames(uber2017)%in%colnames(EmployeeMonthlyFreq)
+
+
+##cleaning and processing the Data my data
+New.UberData <- 
+  UberData%>%
+    mutate(Duration = as.numeric(Duration..min.),
+         GST = as.numeric(GST.amount),
+         datetime = paste(Request.Date..Local.,Request.Time..Local.),
+         "Request Time" = strptime(datetime, format = "%m/%d/%Y %H:%M"),
+          "Date Requested" = as.IDate(`Request Time`),
+          dayofweek = weekdays(`Date Requested`),
+          "Time Requested" = as.ITime(`Request Time`),
+         hours = hour(`Time Requested`),
+         Year = as.numeric(format(`Date Requested`, "%Y")),
+         Months = factor(months(as.Date(`Date Requested`)),
+                         levels = month.name))%>%
+    select(-c(1,2,9,10,20,21))%>%
+    rename("First Name" = First.Name,
+           "Last Name" = Last.Name,
+           "Employee ID" = Employee.ID,
+           "Distance" = Distance..mi.,
+           "Service and Tech Fees"= Service.and.Technology.Fee,
+           "Dropoff Address"= Dropoff.Address,
+           "Pickup Address" = Pickup.Address,
+           "Expense Code"= Expense.Code,
+           "Expense Memo"= Expense.Memo,
+           "Fare" = Fare.in.KES,
+           "Charges" = Total.Charge.in.KES)
+
+
+##handling missing values by replacing them with 0
+New.UberData$GST[which(is.na(New.UberData$GST))] <- 0
+
+
+##Exploratory Data Analysis
+##analysis by year
+YearlyData <- 
+  New.UberData%>%
+    mutate(Year = as.numeric(format(`Date Requested`, "%Y")))%>%
+    select(Charges,Months,Year)%>%
+    group_by(Months,Year)%>%
+    summarise(summedTotals = sum(Charges))
+   
+
+
+##using a density plot to view the trend of the yearly expenditure on uber
+ggplot(data = YearlyData, aes(x=summedTotals, group= Year, 
+                              fill=Months)) +
+  geom_density(adjust=1.5) +
+  theme_ipsum() +
+  facet_wrap(~Year) +
+  theme(
+    legend.position="none",
+    panel.spacing = unit(0.1, "lines"),
+    axis.ticks.x=element_blank()
+  )
+##use a line plots for visualiztaion*
+
+###analysis of expenditure trends by months
+MonthlyData <- 
+  New.UberData%>%
+  mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+         Months = factor(months(as.Date(`Date Requested`)),
+                         levels = month.name))%>%
+  select(Charges,Months,Year)%>%
+  group_by(Months, Year)%>%
+  filter(Year == "2018")%>%
+  summarise(MonthlyTotals = sum(Charges))
+
+
+##visualizing using a barplot
+ggplot(data = MonthlyData, aes(x = Months, y = MonthlyTotals))+
+  geom_bar(stat = 'identity', aes(fill = Months))+
+  theme_grey()+
+  labs(title = 'Uber 2018 Monthly Expenditure',
+       y = 'Monthly expenditure', x = 'Months')
+
+
+###Visualizing with  a density plot
+ggplot(data = MonthlyData, aes(x=Months, group= Year, 
+                               fill=Months)) +
+  geom_density(adjust=1.5) +
+  theme_ipsum() +
+  facet_wrap(~Year) +
+  theme(
+    legend.position="none",
+    panel.spacing = unit(0.1, "lines"),
+    axis.ticks.x=element_blank()
+  )
+
+##compare against 2017**
+
+##Employee STATS Analysis
+##Total Number of employee uber orders by Months
+EmployeeMonthlyFreq <- 
+  New.UberData%>%
+  mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+         Months = factor(months(as.Date(`Date Requested`)),
+                         levels = month.name),
+         FullNames = paste(`First Name`,`Last Name`))%>%
+  select(9,12,17,19,20,21)%>%
+  group_by(Months,Year)%>%
+  filter(Year > "2017")%>%
+  count()%>%
+  rename(Freq = n)
+ 
+
+##Visualizing Employee stats with a barplot
+ggplot(data = EmployeeMonthlyFreq, aes(x = Months, y = Freq))+
+  geom_bar(stat = 'identity', aes(fill = Months))+
+  theme_grey()+
+  labs(title = 'Frequency of Uber orders',
+       y = 'Frequency', x = 'Months')
+###the months of July and August & October to December record the highest numbers.
+
+
+##individual employee spending on uber per year
+EmployeeYearlyExpense <- 
+  New.UberData%>%
+    mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+           Months = factor(months(as.Date(`Date Requested`)),
+                           levels = month.name),
+           FullNames = paste(`First Name`,`Last Name`))%>%
+    select(9,12,17,19,20,21,22)%>%
+    group_by(FullNames,`Expense Code`, Year)%>%
+    summarise(Individual_Charges = sum(Charges))%>%
+    filter(Year == "2018")
+    
+    
+
+
+##Employee analysis by time of order and amount paid
+Order_Amount <- 
+  New.UberData%>%
+    mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+           Months = factor(months(as.Date(`Date Requested`)),
+                           levels = month.name),
+           Time_Hours = hour(`Time Requested` ),
+           FullNames = paste(`First Name`,`Last Name`))%>%
+    select(Charges,Time_Hours)
+
+cor(Order_Amount)
+#model <- lm(formula =  Time_Hours~Charges, data = Order_Amount)
+##there is perfect positive correlation between time ordered and amount paid
+  
+
+###consuming in the departments data
+EmployeeData <- read.csv("EmployeeNames.csv",header=TRUE)
+EmployeeYearlyExpense$FullNames
+
+
+##creating a forloop that matches each name to the department.
+codes = EmployeeData$Employee.Name
+Department <- vector(mode="character", length=nrow(EmployeeYearlyExpense))
+
+for (i in 1:nrow(EmployeeYearlyExpense)) {
+  idx = match(EmployeeYearlyExpense$FullNames[i], codes)
+      Department[i] <- EmployeeData$Department[idx]
+  }
+
+
+###analysis of Total spending by department and expense code
+DepartExpense <- 
+  cbind(EmployeeYearlyExpense,Department)%>%
+    rename(Departments = ...5)%>%
+    group_by(`Expense Code`,Departments,Year)%>%
+    summarise(TotalSpending = sum(Individual_Charges))%>%
+    arrange(desc(TotalSpending))
+
+
+##The quality assurance deptment spends alot on uber throughout the year in 2018
+  
+
+##analysis of frequency of order by expense code
+AnalysisByexpenseCode <- 
+  New.UberData%>%
+    mutate(CAPS = toupper(`Expense Code`),
+        Replaced = str_replace_all(CAPS,fixed(" "), ""),
+         Replaced2 = str_replace_all(Replaced,
+                                     fixed("working late"), "WORKLATE"),
+         New.ExpenseCode = str_replace_all(Replaced2, 
+                                     fixed(c("NATIONALBANKKENYATTAAVENUE" = "OFFICEADMIN",
+                                             "NSSFSETTLEMENT"   = "OFFICEADMIN",
+                                             "NSSF" = "OFFICEADMIN","1517" = "OFFICEADMIN",
+                                             "NAKUMATTLIFESTYLE" = "OFFICEADMIN",
+                                             "NSSFFOLLOWUP" = "OFFICEADMIN",
+                                             "PAYMENTOFPAYEANDNHIF" = "OFFICEADMIN",
+                                             "FROMBANKTOOFFICE" = "OFFICEADMIN",
+                                             "OFFICEADMINFOLLOWUP" = "OFFICEADMIN",
+                                             "FOLLOWUPONOFFICEADMIN" = "OFFICEADMIN",
+                                             "TRAVEL" = "WORKLATE",
+                                             "CLIENTSUPPORT" = "SUPPORT",
+                                             "WORKINGLATE" = "WORKLATE"))))%>%
+    select(9,20,21,25)%>%
+    group_by(New.ExpenseCode,Year)%>%
+    count()%>%
+    
+  
+    
+
+    
+
+##evaluating correlation between distance,Fare and Duration
+## Our hypothesis - they are correlated
+Data.f <- 
+  New.UberData%>%
+    select(Distance,Fare,Duration)
+    
+cor(Data.f)
+
+##they have a perfect positive correlation because the results are above zero
+
+
+##predicting annual expense by expense code
+model <- lm(formula =  TotalSpending~`Expense Code`, data = DepartExpense)
+summary(model)
+
+
+
+
+
+
+

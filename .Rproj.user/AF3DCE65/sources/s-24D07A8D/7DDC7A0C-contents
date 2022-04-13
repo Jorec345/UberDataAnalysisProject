@@ -1,0 +1,36 @@
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(hrbrthemes)
+library(tidyr)
+library(viridis)
+##consuming in data
+safcomPrices <- read.csv("safaricom_prices.csv",header = TRUE)
+
+
+##clean the data
+SafData <- 
+safcomPrices%>%
+  mutate(Market.Date = as.Date(MarketDate,"%d/%m/%Y"),
+  Year = as.numeric(format(Market.Date,"%Y")))%>%
+  select(MarketPrice,Year)%>%
+  group_by(Year)
+
+
+
+###visualizing using a bar plot
+barplot(SafData$MarketPrice, main = "Annual Safaricom Prices between 2015-2020",
+        col = c("khaki","violet","tomato","lavender","ivory","Purple"), 
+        beside = TRUE,  )
+
+##visualizing the data with a density plot
+ggplot(data = SafData, aes(x=MarketPrice, group=Year, fill=Year)) +
+  geom_density(adjust=1.5) +
+  theme_ipsum() +
+  facet_wrap(~Year) +
+  theme(
+    legend.position="none",
+    panel.spacing = unit(0.1, "lines"),
+    axis.ticks.x=element_blank()
+  )
+
