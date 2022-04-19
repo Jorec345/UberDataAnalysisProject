@@ -11,12 +11,9 @@ library(ggpubr)
 library(psych)
 library(lubridate)
 library(ggrepel)
-<<<<<<< HEAD
-
-=======
 library(forcats)
 library(scales)
->>>>>>> cfd962ab06656346babe93eba834db198a52e680
+library(MASS)
 
 
 ##consuming in the 2018 Data
@@ -159,12 +156,6 @@ EmployeeFrequencyofOrder<-
 ##i wanted to know the people who use most ubers and relate it to their departments. QA uses the most
 
 
-
-
-
-
-
-
 ##individual employee expenses
 EmployeeYearlyExpense <- 
   New.UberData%>%
@@ -200,7 +191,7 @@ ggplot(data = AnalysisByTime, aes(x = hours, y = No.OfOrders))+
 
 
 ##Analysis by day of week
-<<<<<<< HEAD
+
 AnalysisByDayOfWeek <- 
   New.UberData%>%
     mutate(FullNames = paste(`First Name`,`Last Name`))%>%
@@ -215,7 +206,7 @@ ggplot(AnalysisByDayOfWeek,aes(fill = dayofweek,x = dayofweek,y = No.OfOrders))+
   facet_grid(.~Year)+
   ggtitle("Analysis by day of week")
 
-=======
+##analysis by day of the week in 2018
 New.UberData%>%
   mutate(FullNames = paste(`First Name`,`Last Name`))%>%
   select(9,10,13,12,17,19,20,21,22)%>%
@@ -223,7 +214,7 @@ New.UberData%>%
   group_by(dayofweek)%>%
   summarise(No.OfOrders = n()) %>%
   arrange(desc(No.OfOrders))
->>>>>>> cfd962ab06656346babe93eba834db198a52e680
+
 
 ##Employee analysis by time of order and amount paid
 Order_Amount <- 
@@ -312,15 +303,19 @@ Data.f <-
 cor(Data.f)
 
 ##there is stronger positive correlation between fare and distance
+head(New.UberData)
 
 ##predicting annual expense by expense code
 Dta.2018 <- 
   New.UberData%>%
-  filter(Year == "2018")
- 
+  filter(Year == "2018")%>%
+  select(Charges, Distance,Duration)
+
+##splitting data into test and train data
+
 split.Data <- sample(c(rep(0, 0.7 * nrow(Dta.2018)), rep(1, 0.3 * nrow(Dta.2018))))
 table(split.Data)
-
+plot(Dta.2018)
 
 trainData <- Dta.2018[split.Data == 0,]
 testData <- Dta.2018[split.Data == 1,]
@@ -328,8 +323,46 @@ testData <- Dta.2018[split.Data == 1,]
 
 model <- lm(formula =  Charges~Distance+Duration, data = trainData)
 summary(model)
-Model.Prediction <- predict(model, data.frame(Distance = testData$Distance, 
-                          Duration = testData$Duration))
-sum(testData$Charges - Model.Prediction)
 
-##testing git
+StepData <- stepAIC(model,direction = "both")
+summary(StepData)
+Model.Prediction <- predict(StepData, data.frame(Distance = testData$Distance,
+                                              Duration = testData$Duration))
+(sum(testData$Charges)- sum(Model.Prediction))
+
+
+##predicting charges using frequency of order
+Freq.Data <- 
+  New.UberData%>%
+    mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+           Months = factor(months(as.Date(`Date Requested`)),
+                           levels = month.name),
+           FullNames = paste(`First Name`,`Last Name`))%>%
+    select(9,12,17,19,20,21,22)%>%
+    group_by(Months,Year)%>%
+    count()%>%
+    rename(Freq = n)%>%
+    filter(Year == "2018")
+
+Charges.Data <- 
+  New.UberData%>%
+    mutate(Year = as.numeric(format(`Date Requested`, "%Y")),
+           Months = factor(months(as.Date(`Date Requested`)),
+                           levels = month.name))%>%
+    select(Charges,Months,Year)%>%
+    group_by(Months, Year)%>%
+    summarise(MonthlyTotals = sum(Charges))%>%
+    filter(Year == "2018")
+
+New.Data2018 <- 
+  cbind(Freq.Data,Charges.Data)%>%
+  select(-c(1,2,4,5))
+
+
+
+new.Model <- lm(formula = MonthlyTotals~Freq, data = New.Data2018)
+pred <- predict(new.Model)
+summary(new.Model)
+sum(New.Data2018$MonthlyTotals - pred)
+
+
